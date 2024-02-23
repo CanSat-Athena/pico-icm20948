@@ -6,6 +6,7 @@
 int8_t icm20948_init(icm20948_config_t *config) {
     uint8_t reg[2], buf;
 
+    config->semphrTake();
     // wake up accel/gyro!
     // first write register then, write value
     reg[0] = PWR_MGMT_1; reg[1] = 0x00;
@@ -22,7 +23,7 @@ int8_t icm20948_init(icm20948_config_t *config) {
     // disable accel/gyro once
     reg[0] = PWR_MGMT_2; reg[1] = 0x3F;
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, reg, 2, false);
-    sleep_ms(10);
+    config->delayFunc(10);
 
     // enable accel/gyro (again)
     reg[0] = PWR_MGMT_2; reg[1] = 0x00;
@@ -90,6 +91,7 @@ int8_t icm20948_init(icm20948_config_t *config) {
     // set mag mode, to measure continuously in 100Hz
     reg[0] = AK09916_CNTL2; reg[1] = 0x08;
     i2c_write_blocking(config->i2c, config->addr_mag, reg, 2, false);
+    config->semphrGive();
 
     return 0;
 }
@@ -138,6 +140,8 @@ void icm20948_set_mag_rate(icm20948_config_t *config, uint8_t mode) {
 }
 
 void icm20948_read_raw_accel(icm20948_config_t *config, int16_t accel[3]) {
+    config->semphrTake();
+
     uint8_t buf[6];
 
     // accel: 2 bytes each axis
@@ -145,12 +149,16 @@ void icm20948_read_raw_accel(icm20948_config_t *config, int16_t accel[3]) {
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, &reg, 1, true);
     i2c_read_blocking(config->i2c, config->addr_accel_gyro, buf, 6, false);
 
+    config->semphrGive();
+
     for (uint8_t i = 0; i < 3; i++) accel[i] = (buf[i * 2] << 8 | buf[(i * 2) + 1]);
     
     return;
 }
 
 void icm20948_read_raw_gyro(icm20948_config_t *config, int16_t gyro[3]) {
+    config->semphrTake();
+
     uint8_t buf[6];
 
     // gyro: 2byte each axis
@@ -158,15 +166,21 @@ void icm20948_read_raw_gyro(icm20948_config_t *config, int16_t gyro[3]) {
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, &reg, 1, true);
     i2c_read_blocking(config->i2c, config->addr_accel_gyro, buf, 6, false);
 
+    config->semphrGive();
+
     for (uint8_t i = 0; i < 3; i++) gyro[i] = (buf[i * 2] << 8 | buf[(i * 2) + 1]);
 
     return;
 }
 
 void icm20948_read_raw_temp(icm20948_config_t *config, int16_t *temp) {
+    config->semphrTake();
+
     uint8_t reg = TEMP_OUT_H, buf[2];
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, &reg, 1, true);
     i2c_read_blocking(config->i2c, config->addr_accel_gyro, buf, 2, false);
+
+    config->semphrGive();
 
     *temp = (buf[0] << 8 | buf[1]);
 
@@ -174,11 +188,15 @@ void icm20948_read_raw_temp(icm20948_config_t *config, int16_t *temp) {
 }
 
 void icm20948_read_raw_mag(icm20948_config_t *config, int16_t mag[3]) {
+    config->semphrTake();
+
     uint8_t buf[8];
 
     uint8_t reg = AK09916_XOUT_L;
     i2c_write_blocking(config->i2c, config->addr_mag, &reg, 1,true);
     i2c_read_blocking(config->i2c, config->addr_mag, buf, 8, false);
+
+    config->semphrGive();
 
     for (int i = 0; i < 3; i++) mag[i] = (buf[(i * 2) + 1] << 8 | buf[(i * 2)]);
 
@@ -202,7 +220,7 @@ void icm20948_cal_gyro(icm20948_config_t *config, int16_t gyro_bias[3]) {
         for (uint8_t j = 0; j < 3; j++) {
             bias[j] += buf[j];
         }
-        sleep_ms(25);
+        config->delayFunc(25);
     }
     for (uint8_t i = 0; i < 3; i++) gyro_bias[i] = (int16_t)(bias[i] / 200);
     
@@ -225,7 +243,7 @@ void icm20948_cal_accel(icm20948_config_t *config, int16_t accel_bias[3]) {
             if (j == 2) bias[j] += (buf[j] - 16384);
             else bias[j] += buf[j];
         }
-        sleep_ms(25);
+        config->delayFunc(25);
     }
     for (uint8_t i = 0; i < 3; i++) accel_bias[i] = (int16_t)(bias[i] / 200);
     return;
@@ -248,7 +266,7 @@ void icm20948_cal_mag_simple(icm20948_config_t *config, int16_t mag_bias[3]) {
             if (buf[j] > max[j]) max[j] = buf[j];
             if (buf[j] < min[j]) min[j] = buf[j];
         }
-        sleep_ms(10);
+        config->delayFunc(10);
     }
     for (uint8_t i = 0; i < 3; i++) mag_bias[i] = (max[i] + min[i]) / 2;
     return;

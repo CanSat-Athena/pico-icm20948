@@ -12,6 +12,11 @@ typedef struct icm20948_config {
     // addr_mag:         0x0C
     uint8_t    addr_accel_gyro;
     uint8_t    addr_mag;
+
+    void (*delayFunc)(uint32_t);
+    bool (*semphrTake)();
+    bool (*semphrGive)();
+
     // example
     // i2c_inst_t icm20948_i2c = {i2c0_hw, false}
     i2c_inst_t *i2c;

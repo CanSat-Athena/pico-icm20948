@@ -9,3 +9,5 @@ target_link_libraries(pico-icm20948
     pico_stdlib
     hardware_i2c
 )
+
+target_include_directories(pico-icm20948 INTERFACE ${CMAKE_CURRENT_LIST_DIR})
