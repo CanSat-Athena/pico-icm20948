@@ -44,29 +44,29 @@ int8_t icm20948_init(icm20948_config_t *config) {
 
     // gyro config
     //
-    // set full scale to +-
+    // set full scale to 1000+-dps
     // set noise bandwidth to 
     // smaller bandwidth means lower noise level & slower max sample rate
     reg[0] = GYRO_CONFIG_1; reg[1] = 0x29;
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, reg, 2, false);
     //
-    // set gyro output data rate to 100Hz
+    // set gyro output data rate to 20Hz
     // output_data_rate = 1.125kHz / (1 + GYRO_SMPLRT_DIV)
-    // 1125 / 11 = 100
-    reg[0] = GYRO_SMPLRT_DIV; reg[1] = 0x0A;
+    // 1125 / 57 = 20
+    reg[0] = GYRO_SMPLRT_DIV; reg[1] = 0x38;
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, reg, 2, false);
 
     // accel config
     //
-    // set full scale to +-2g
+    // set full scale to +-4g
     // set noise bandwidth to 136Hz
     reg[0] = ACCEL_CONFIG; reg[1] = 0x11;
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, reg, 2, false);
     //
-    // set accel output data rate to 100Hz
+    // set accel output data rate to 20Hz
     // output_data_rate = 1.125kHz / (1 + ACCEL_SMPLRT_DIV)
     // 16 bits for ACCEL_SMPLRT_DIV
-    reg[0] = ACCEL_SMPLRT_DIV_2; reg[1] = 0x0A;
+    reg[0] = ACCEL_SMPLRT_DIV_2; reg[1] = 0x38;
     i2c_write_blocking(config->i2c, config->addr_accel_gyro, reg, 2, false);
     
     // switch to user bank to 0
