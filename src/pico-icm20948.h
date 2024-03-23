@@ -20,6 +20,7 @@ typedef struct icm20948_config {
     // example
     // i2c_inst_t icm20948_i2c = {i2c0_hw, false}
     i2c_inst_t *i2c;
+    uint16_t i2cTimeout_us;
 } icm20948_config_t;
 
 typedef struct icm20984_data {
